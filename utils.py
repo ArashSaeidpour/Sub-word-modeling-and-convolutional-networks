@@ -44,6 +44,41 @@ def pad_sents(sents, pad_token):
 
 
 
+def pad_sents_char(sents, char_pad_token):
+    """ Pad list of sentences according to the longest sentence in the batch and max_word_length.
+    @param sents (list[list[list[int]]]): list of sentences, result of `words2charindices()`
+        from `vocab.py`
+    @param char_pad_token (int): index of the character-padding token
+    @returns sents_padded (list[list[list[int]]]): list of sentences where sentences/words shorter
+        than the max length sentence/word are padded out with the appropriate pad token, such that
+        each sentence in the batch now has same number of words and each word has an equal
+        number of characters
+        Output shape: (batch_size, max_sentence_length, max_word_length)
+    """
+    # Words longer than 21 characters should be truncated
+    max_word_length = 21
+    len_sents=[len(sentc) for sentc in sents]
+    max_len_sentc=max(len_sents)
+    sents_padded=[]
+    
+    for length,sentc in zip(len_sents,sents):
+        sentc_padded=[]
+        for word in sentc:
+            word_fixed=word.copy()
+            if len(word)>max_word_length:
+                word_fixed=word_fixed[:max_word_length]
+            elif len(word)<max_word_length:
+                word_fixed=word_fixed+[char_pad_token]*(max_word_length-len(word))
+            sentc_padded.append(word_fixed)
+            
+        if len(sentc_padded)<max_len_sentc:
+            sentc_padded= sentc_padded + [max_word_length*[char_pad_token]] * (max_len_sentc - length)
+        sents_padded.append(sentc_padded)
+
+    return sents_padded
+
+
+
 def read_corpus(file_path, source):
     """ Read file, where each sentence is dilineated by a `\n`.
     @param file_path (str): path to file containing corpus
